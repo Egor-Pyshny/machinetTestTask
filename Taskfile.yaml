@@ -1,0 +1,33 @@
+version: '3'
+
+output: 'prefixed'
+
+tasks:
+
+  code-format:
+    cmds:
+      - >
+        poetry run autoflake
+        --exclude '*.idea*'
+        --exclude '*.git*'
+        --exclude '*.mypy_cache*'
+        --exclude '*venv*'
+        --expand-star-imports
+        --in-place
+        --recursive
+        --remove-duplicate-keys
+        --remove-unused-variables
+        --verbose
+        .
+      - poetry run black .
+      - poetry run isort .
+    desc: format code with black & isort
+    dir: "."
+
+  code-lint:
+    cmds:
+      - poetry run black --check .
+      - poetry run isort --check-only .
+      - poetry run isort
+      - poetry run flake8 --max-line-length 89
+    desc: sequentially applies linters

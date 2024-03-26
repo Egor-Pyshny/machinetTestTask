@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Upload</title>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.4.1/socket.io.js"></script>
+    <script>
+        var socket = io();
+        var requestNum = 0;
+        var selectedFiles = [];
+        var fileDataArray = [];
+
+        function handleFileSelect(files) {
+            console.log("handleFileSelect")
+            for (var i = 0; i < files.length; i++) {
+                console.log(files[i].size);
+                if(files[i].size>1024*1024*5){
+                    var body = document.body;
+                    var paragraph = document.createElement("p");
+                    paragraph.textContent = files[i].name + "size too big(max size = 5MB)";
+                    body.appendChild(paragraph);
+                    continue;
+                }
+                selectedFiles.push(files[i]);
+            }
+
+            var fileList = document.getElementById('file_list');
+            fileList.innerHTML = '';
+            for (var i = 0; i < selectedFiles.length; i++) {
+                var listItem = document.createElement('li');
+                listItem.textContent = selectedFiles[i].name;
+                fileList.appendChild(listItem);
+            }
+        }
+
+        function handleUploadClick() {
+            var promises = [];
+            for (file of selectedFiles) {
+                const reader = new FileReader();
+                var promise = new Promise(function(resolve, reject) {
+                    reader.onload = function(file) {
+                        return function(e) {
+                            fileDataArray.push({
+                                name: file.name,
+                                fileData: e.target.result,
+                                request: requestNum
+                            });
+                            resolve();
+                        };
+                    }(file);
+                    reader.onerror = reject;
+                });
+                promises.push(promise);
+                reader.readAsText(file);
+            }
+            Promise.all(promises)
+                .then(function() {
+                    var step = 10;
+                    var start = 0;
+                    var end = Math.min(start + step, fileDataArray.length);
+                    while (start < fileDataArray.length) {
+                        var data = fileDataArray.slice(start, end);
+                        try {
+                            console.log('Processing batch:', data);
+                            socket.emit('file_upload', data);
+                        } catch (err){
+                            console.log(err);
+                        }
+                        requestNum+=1;
+                        start = end;
+                        end = Math.min(start + step, fileDataArray.length);
+                    }
+                    var fileList = document.getElementById('file_list');
+                    fileList.innerHTML = '';
+                    selectedFiles = [];
+                    fileDataArray = [];
+                })
+                .catch(function(error) {
+                    console.error('Error occurred while reading files:', error);
+                });
+        }
+
+        socket.on('file_upload_status', function(data) {
+            var body = document.body;
+            var paragraph = document.createElement("p");
+            paragraph.textContent = data.message;
+            body.appendChild(paragraph);
+            console.log(data.message);
+        });
+
+        socket.on("connect_error", (err) => {
+          console.log(`connect_error due to ${err.message}`);
+        });
+    </script>
+</head>
+<body>
+    <h1>File Upload</h1>
+    <input type="file" id="file_input" multiple onchange="handleFileSelect(this.files)">
+    <ul id="file_list"></ul>
+    <button onclick="handleUploadClick()">Upload</button>
+</body>
+</html>
