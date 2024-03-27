@@ -89,7 +89,11 @@
         });
 
         socket.on("connect_error", (err) => {
-          console.log(`connect_error due to ${err.message}`);
+            var body = document.body;
+            var paragraph = document.createElement("p");
+            paragraph.textContent = err.message;
+            body.appendChild(paragraph);
+            console.log(err.message);
         });
     </script>
 </head>

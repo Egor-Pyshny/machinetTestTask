@@ -61,7 +61,7 @@ if __name__ == "__main__":
     directory_path = f"{os.path.abspath('.')}\\files"
     if not os.path.exists(directory_path) or not os.path.isdir(directory_path):
         os.makedirs(directory_path)
-    if not os.path.exists(directory_path+".gitignore"):
-        with open('files\\.gitignore', 'w') as gitignore_file:
+    if not os.path.exists(directory_path + ".gitignore"):
+        with open("files\\.gitignore", "w") as gitignore_file:
             gitignore_file.write("*\n!.gitignore")
     socketio.run(app, allow_unsafe_werkzeug=True)
