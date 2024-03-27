@@ -59,6 +59,7 @@
                     var end = Math.min(start + step, fileDataArray.length);
                     while (start < fileDataArray.length) {
                         var data = fileDataArray.slice(start, end);
+                        for(d of data) d.request = requestNum;
                         try {
                             console.log('Processing batch:', data);
                             socket.emit('file_upload', data);
